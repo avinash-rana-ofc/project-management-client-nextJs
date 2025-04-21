@@ -1,73 +1,97 @@
-// Store
-'use client'
-import { useRef } from 'react'
-import { Provider } from 'react-redux'
+import { useRef } from "react";
+import { combineReducers, configureStore } from "@reduxjs/toolkit";
+import {
+  TypedUseSelectorHook,
+  useDispatch,
+  useSelector,
+  Provider,
+} from "react-redux";
+import globalReducer from "@/state";
+import { api } from "@/state/api";
+import { setupListeners } from "@reduxjs/toolkit/query";
 
-import { configureStore } from '@reduxjs/toolkit'
-import { useDispatch, useSelector, useStore } from 'react-redux'
+import {
+  persistStore,
+  persistReducer,
+  FLUSH,
+  REHYDRATE,
+  PAUSE,
+  PERSIST,
+  PURGE,
+  REGISTER,
+} from "redux-persist";
+import { PersistGate } from "redux-persist/integration/react";
+import createWebStorage from "redux-persist/lib/storage/createWebStorage";
 
+/* REDUX PERSISTENCE */
+const createNoopStorage = () => {
+  return {
+    getItem(_key: any) {
+      return Promise.resolve(null);
+    },
+    setItem(_key: any, value: any) {
+      return Promise.resolve(value);
+    },
+    removeItem(_key: any) {
+      return Promise.resolve();
+    },
+  };
+};
 
+const storage =
+  typeof window === "undefined"
+    ? createNoopStorage()
+    : createWebStorage("local");
 
-/* Store */
+const persistConfig = {
+  key: "root",
+  storage,
+  whitelist: ["global"],
+};
+const rootReducer = combineReducers({
+  global: globalReducer,
+  [api.reducerPath]: api.reducer,
+});
+const persistedReducer = persistReducer(persistConfig, rootReducer);
 
+/* REDUX STORE */
 export const makeStore = () => {
   return configureStore({
-    reducer: {},
-  })
-}
+    reducer: persistedReducer,
+    middleware: (getDefault) =>
+      getDefault({
+        serializableCheck: {
+          ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
+        },
+      }).concat(api.middleware),
+  });
+};
 
-// Infer the type of makeStore
-export type AppStore = ReturnType<typeof makeStore>
-// Infer the `RootState` and `AppDispatch` types from the store itself
-export type RootState = ReturnType<AppStore['getState']>
-export type AppDispatch = AppStore['dispatch']
+/* REDUX TYPES */
+export type AppStore = ReturnType<typeof makeStore>;
+export type RootState = ReturnType<AppStore["getState"]>;
+export type AppDispatch = AppStore["dispatch"];
+export const useAppDispatch = () => useDispatch<AppDispatch>();
+export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
 
-
-
-/* Hooks */
-
-// Use throughout your app instead of plain `useDispatch` and `useSelector`
-export const useAppDispatch = useDispatch.withTypes<AppDispatch>()
-export const useAppSelector = useSelector.withTypes<RootState>()
-export const useAppStore = useStore.withTypes<AppStore>()
-
-
-
-/* Store Provider */
-
+/* PROVIDER */
 export default function StoreProvider({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  const storeRef = useRef<AppStore>(undefined)
+  const storeRef = useRef<AppStore>();
   if (!storeRef.current) {
-    // Create the store instance the first time this renders
-    storeRef.current = makeStore()
+    storeRef.current = makeStore();
+    setupListeners(storeRef.current.dispatch);
   }
+  const persistor = persistStore(storeRef.current);
 
-  return <Provider store={storeRef.current}>{children}</Provider>
+  return (
+    <Provider store={storeRef.current}>
+      <PersistGate loading={null} persistor={persistor}>
+        {children}
+      </PersistGate>
+    </Provider>
+  );
 }
-
-
-
-/* Product Name */
-
-export default function ProductName({ product }: { product: Product }) {
-    // Initialize the store with the product information
-    const store = useAppStore()
-    const initialized = useRef(false)
-    if (!initialized.current) {
-      store.dispatch(initializeProduct(product))
-      initialized.current = true
-    }
-    const name = useAppSelector((state) => state.product.name)
-    const dispatch = useAppDispatch()
-  
-    return (
-      <input
-        value={name}
-        onChange={(e) => dispatch(setProductName(e.target.value))}
-      />
-    )
-  }
