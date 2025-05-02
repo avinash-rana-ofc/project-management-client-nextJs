@@ -1,6 +1,7 @@
 "use client";
 import { useAppDispatch, useAppSelector } from "@/app/redux";
 import { setIsSidebarCollapsed } from "@/state";
+import { useGetProjectsQuery } from "@/state/api";
 import {
   AlertCircle,
   AlertOctagon,
@@ -28,6 +29,7 @@ const Sidebar = () => {
   const [showProjects, setShowProjects] = useState(true);
   const [showPriority, setShowPriority] = useState(true);
 
+  const { data: projects } = useGetProjectsQuery();
   const dispatch = useAppDispatch();
   const isSidebarCollapsed = useAppSelector(
     (state) => state.global.isSidebarCollapsed,
@@ -69,7 +71,9 @@ const Sidebar = () => {
             </div>
           </div>
         </div>
-        {/* Navbar Linkd */}
+
+        {/*  Navbar Linked  */}
+
         <nav className="z-10 w-full">
           <SidebarLink icon={HomeIcon} label="Home" href="/" />
           <SidebarLink icon={Briefcase} label="Timeline" href="/timeline" />
@@ -91,6 +95,17 @@ const Sidebar = () => {
           )}
         </button>
         {/* Projects List */}
+        {console.log(showProjects+" testing purpose")}
+        {showProjects &&
+          projects?.map((project) => (
+            <SidebarLink
+              key={project.id}
+              icon={Briefcase}
+              label={project.name}
+              href={`/projects/${project.id}`}
+            />
+          ))}
+
         {/* Priorities Links */}
         <button
           onClick={() => setShowPriority((prev) => !prev)}
@@ -151,7 +166,7 @@ const SidebarLink = ({ href, icon: Icon, label }: SidebarLinkProps) => {
         className={`relative flex cursor-pointer items-center gap-3 transition-colors hover:bg-gray-100 dark:bg-black dark:hover:bg-gray-700 ${isActive ? "bg-gray-100 text-white dark:bg-gray-600" : ""} justify-start px-8 py-3`}
       >
         {isActive && (
-          <div className="w-[5px] absolute left-0 top-0 h-[100%] bg-blue-200" />
+          <div className="absolute left-0 top-0 h-[100%] w-[5px] bg-blue-200" />
         )}
         <Icon className="h-6 w-6 text-gray-800 dark:text-gray-100" />
         <span className="font-medium text-gray-800 dark:text-gray-100">
