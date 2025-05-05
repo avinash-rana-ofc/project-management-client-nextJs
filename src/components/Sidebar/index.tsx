@@ -30,6 +30,7 @@ const Sidebar = () => {
   const [showPriority, setShowPriority] = useState(true);
 
   const { data: projects } = useGetProjectsQuery();
+  
   const dispatch = useAppDispatch();
   const isSidebarCollapsed = useAppSelector(
     (state) => state.global.isSidebarCollapsed,
@@ -95,7 +96,7 @@ const Sidebar = () => {
           )}
         </button>
         {/* Projects List */}
-        {console.log(showProjects+" testing purpose")}
+        {console.log(showProjects+" testing purpose" + projects)}
         {showProjects &&
           projects?.map((project) => (
             <SidebarLink

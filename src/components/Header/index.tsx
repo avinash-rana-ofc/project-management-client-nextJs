@@ -12,7 +12,6 @@ const Header = ({ name, buttonComponent, isSmallText = false }: Props) => {
       <h1
         className={`${isSmallText ? "text-lg" : "text-2xl"} font-semibold dark:text-white`}
       >
-        Testing
         {name}
       </h1>
       {buttonComponent}
