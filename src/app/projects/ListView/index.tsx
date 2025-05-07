@@ -5,10 +5,10 @@ import TaskCard from "@/components/TaskCard";
 
 type Props = {
     id : string;
-    setIsModalNewtaskOpen : (isOpen : boolean) => void;
+    setIsModalNewTaskOpen : (isOpen : boolean) => void;
 }
 
-const ListView = ({id, setIsModalNewtaskOpen}: Props) => {
+const ListView = ({id, setIsModalNewTaskOpen}: Props) => {
     const {data : tasks, error, isLoading } = useGetTasksQuery({projectId : Number(id)});
 
     if(isLoading) return <div>Loading...</div>;
